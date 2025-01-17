@@ -1,0 +1,15 @@
+{
+ "namespace": "com.alexfranken.confluent",
+ "type": "record",
+ "name": "NetflixUkClickEvent",
+ "fields": [
+     {"name": "row_id", "type": "int"},
+     {"name": "event_time",  "type": ["long", "null"]},
+     {"name": "watch_duration",  "type": ["double", "null"]},
+     {"name": "movie_title", "type": ["string", "null"]},
+     {"name": "movie_genre", "type": ["string", "null"]},
+     {"name": "release_date",  "type": ["string", "null"]},
+     {"name": "movie_id", "type": ["string", "null"]},
+     {"name": "user_id", "type": ["string", "null"]}
+ ]
+}
