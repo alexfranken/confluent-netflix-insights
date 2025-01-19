@@ -14,8 +14,7 @@ import java.time.ZoneId;
 public class StringToNetflixUkClickEventAdapter {
     public static final String SCHEMA_PATH = "schemas/NetflixUkClickEvent.avsc";
     public static final String SOURCE_FORMAT = "yyyy-MM-dd HH:mm:ss";
-    private final ZoneId ukZoneId = ZoneId.of("Europe/London");
-//    private final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(SOURCE_FORMAT);
+    public static final ZoneId UK_ZONE_ID = ZoneId.of("Europe/London");
     private final Schema targetSchema;
     public StringToNetflixUkClickEventAdapter() throws IOException {
 
@@ -30,9 +29,7 @@ public class StringToNetflixUkClickEventAdapter {
         String[] parts = line.split(lineRegex(), -1);
         GenericRecord record = new GenericData.Record(this.targetSchema);
         record.put("row_id", Integer.parseInt(parts[0]));
-
-        record.put("event_time", DateUtils.toUtcTimestamp(parts[1], SOURCE_FORMAT, this.ukZoneId));
-
+        record.put("event_time", DateUtils.toUtcTimestamp(parts[1], SOURCE_FORMAT, UK_ZONE_ID));
         record.put("watch_duration", Double.parseDouble(parts[2]));
         record.put("movie_title", sanitizeString(parts[3]));
         record.put("movie_genre", sanitizeString(parts[4]));
