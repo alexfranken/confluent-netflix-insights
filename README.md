@@ -101,19 +101,6 @@ window_start            movie_id   movie_title                              dail
 ║2019-03-29 00:00:00.000 1040e1c42e Alvin and the Chipmunks Meet the Wolfman 1                0.0       
 ```
 
-```
-SELECT  *
-FROM (
-   SELECT *, ROW_NUMBER() OVER (PARTITION BY window_start, window_end ORDER BY category_count DESC ) as hour_rank
-      FROM (
-            SELECT window_start, window_end, movie_title, COUNT(*) as daily_view_count, SUM(duration) as watch_time_seconds
-               FROM TABLE(TUMBLE(TABLE confluent-netflix-clickstream, DESCRIPTOR(event_time), INTERVAL '1' DAY))
-            GROUP BY window_start, window_end, genre
-              )
-) WHERE hour_rank = 1 ;
-```
-
-
 # Observations / Questions
 * Created schema via cli but UI/console only allowed me to create a new data contract, rather than associate an \
 existing schema (within registry) to an already created topic. So, I deleted both again to do all in one via UI/console.\
