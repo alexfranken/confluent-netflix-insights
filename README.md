@@ -17,7 +17,8 @@ CC Topic Messages 'Total messages' metric: 671,736
 Summary: accurate count of messages in topic (minus header row)
 
 # Flink Sql
-1. Calculate the average watch duration for each movie title across all users
+## Exercise 1
+Calculate the average watch duration for each movie title across all users
 ```
 SELECT `movie_id`, `movie_title`, 
     AVG(`watch_duration`) AS avg_watch_duration_seconds, COUNT(*) AS num_click_events
@@ -64,7 +65,8 @@ movie_id   movie_title                              avg_watch_duration_seconds n
 ║1040e1c42e Alvin and the Chipmunks Meet the Wolfman 9442.666666666666          15 
 ```
 
-2. Analyze daily engagement patterns for each movie title. Calculate daily view counts and total watch time for each \
+## Exercise 2
+Analyze daily engagement patterns for each movie title. Calculate daily view counts and total watch time for each \
 title to track how user interest fluctuates day by day.
 
 Add column in prep for windowing
@@ -100,6 +102,32 @@ window_start            movie_id   movie_title                              dail
 ║2019-01-08 00:00:00.000 1040e1c42e Alvin and the Chipmunks Meet the Wolfman 1                4200.0                                                                                    ║
 ║2019-03-29 00:00:00.000 1040e1c42e Alvin and the Chipmunks Meet the Wolfman 1                0.0       
 ```
+Below returns view of top performing (distinct user view count) movie titles by day.
+```aiignore
+SELECT  *
+FROM (
+   SELECT *, ROW_NUMBER() OVER (PARTITION BY window_start, window_end ORDER BY distinct_daily_user_views DESC ) as daily_popularity_rank
+      FROM (
+            SELECT window_start, window_end, movie_id, movie_title, COUNT(*) as daily_click_count, COUNT(distinct user_id) as distinct_daily_user_views, SUM(watch_duration) as watch_time_seconds
+               FROM TABLE(TUMBLE(TABLE `confluent-netflix-clickstream`, DESCRIPTOR(event_time_ltz), INTERVAL '1' DAY))
+            GROUP BY window_start, window_end, movie_id, movie_title
+              )
+) WHERE daily_popularity_rank =1 ;
+```
+Results
+```aiignore
+window_start            window_end              movie_id   movie_title                                     daily_click_count distinct_daily_user_views watch_time_seconds daily_popularity_rank                        ║
+║2016-12-31 00:00:00.000 2017-01-01 00:00:00.000 8762763a6b Zookeeper                                       3                 2                         95121.0            1                                            ║
+║2017-01-01 00:00:00.000 2017-01-02 00:00:00.000 f77e500e7a London Has Fallen                               25                20                        736847.0           1                                            ║
+║2017-01-02 00:00:00.000 2017-01-03 00:00:00.000 f77e500e7a London Has Fallen                               23                19                        1210825.0          1                                            ║
+║2017-01-03 00:00:00.000 2017-01-04 00:00:00.000 f77e500e7a London Has Fallen                               18                15                        584389.0           1                                            ║
+║2017-01-04 00:00:00.000 2017-01-05 00:00:00.000 f77e500e7a London Has Fallen                               18                17                        1692027.0          1                                            ║
+║2017-01-05 00:00:00.000 2017-01-06 00:00:00.000 f77e500e7a London Has Fallen                               21                17                        840336.0           1                                            ║
+║2017-01-06 00:00:00.000 2017-01-07 00:00:00.000 f77e500e7a London Has Fallen                               11                10                        211809.0           1                                            ║
+║2017-01-07 00:00:00.000 2017-01-08 00:00:00.000 f77e500e7a London Has Fallen                               18                13                        202614.0           1                                            ║
+║2017-01-08 00:00:00.000 2017-01-09 00:00:00.000 57e2731b38 Coin Heist                                      13                9                         36505.0            1                      
+```
+
 
 # Observations / Questions
 * Created schema via cli but UI/console only allowed me to create a new data contract, rather than associate an \
@@ -111,3 +139,4 @@ Documentation references "Schema tab, within topics section".
 java 23? -Djava.security.manager=allow https://github.com/microsoft/mssql-jdbc/issues/2524
 * watermarks - time col in long vs string date format : https://docs.confluent.io/cloud/current/flink/concepts/timely-stream-processing.html
 * Data Quality: Movie Release Date field can have a value of 'NOT AVAILABLE'. Therefore, Schema will treat this field value as a String
+* 
